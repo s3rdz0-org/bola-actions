@@ -1,0 +1,16 @@
+name: probe
+on: [push, workflow_dispatch]
+permissions: read-all
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe sibling private repo with GITHUB_TOKEN
+        env:
+          GT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514)"
+          echo "CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514/contents/SECRET.txt)"
+          echo "ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514/issues/1)"
+          echo "CLONE:$(git clone https://x-access-token:$GT@github.com/s3rdz0-org/bola-canary-23514 /tmp/c 2>&1 | tail -1)"
+          echo "INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" https://api.github.com/installation/repositories | head -c 200)"
