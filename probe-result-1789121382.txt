@@ -1,0 +1,20 @@
+=== codespace deputy probe ===
+whoami(token): {
+  "login": "s3rdz0tests",
+  "id": 238505354,
+  "node_id": "U_kgDODjdNig",
+  "avatar_url": "https://avatars.githubusercontent.com/u/238505354?v=4",
+  "gravatar_id": "",
+  "url": "https://api.github.c
+
+TOKEN GET target repo: 404
+TOKEN target SECRET: {
+  "message": "Not Found",
+  "documentation_url": "https://docs.github.com/rest/repos/contents#get-repository-content",
+  "status": "404"
+}
+GIT ls-remote target: remote: Repository not found.
+fatal: repository 'https://github.com/s3rdz0x1337/codespace-target-1789121382/' not found
+token scope header:
+x-oauth-scopes: 
+access-control-expose-headers: ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset, Warning
